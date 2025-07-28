@@ -3,8 +3,9 @@ const router = express.Router();
 const controller = require('../controllers/casosController');
 
 router.get('/', controller.getAll);
-router.get('/:id', controller.getById);
+router.get('/search', controller.getAll);
 router.get('/:id/agente', controller.getAgenteOfCaso);
+router.get('/:id', controller.getById);
 router.post('/', controller.create);
 router.put('/:id', controller.update);
 router.patch('/:id', controller.partialUpdate);

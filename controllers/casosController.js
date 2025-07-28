@@ -10,6 +10,12 @@ class ApiError extends Error {
 	}
 }
 
+const verifyAgente = (agenteId) => {
+    if (!agenteId) return false;
+    const agente = agentesRepository.findById(agenteId);
+    return !!agente;
+};
+
 const getAll = (req, res, next) => {
 	try {
 		let casos = casosRepository.findAll();
@@ -55,6 +61,7 @@ const update = (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const data = casoSchema.parse(req.body);
+		delete data.id;
 		if (!verifyAgente(data.agente_id)) {
 			throw new ApiError('Agente não encontrado.', 404);
 		}
@@ -71,6 +78,7 @@ const partialUpdate = (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const data = casoSchema.partial().parse(req.body);
+		delete data.id;
 		if (data.agente_id && !verifyAgente(data.agente_id)) {
 			throw new ApiError('Agente não encontrado.', 404);
 		}
@@ -94,12 +102,6 @@ const remove = (req, res, next) => {
 		next(new ApiError('Erro ao deletar caso'));
 	}
 }
-
-const verifyAgente = (agenteId) => {
-    if (!agenteId) return true;
-    const agente = agentesRepository.findById(agenteId);
-    return !!agente;
-};
 
 const getAgenteOfCaso = (req, res, next) => {
 	try {

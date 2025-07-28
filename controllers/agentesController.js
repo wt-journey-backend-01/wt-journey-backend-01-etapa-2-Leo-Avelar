@@ -60,6 +60,7 @@ const update = (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const data = agenteSchema.parse(req.body);
+		delete data.id;
 		const updated = agentesRepository.update(id, data);
 		if (!updated) throw new ApiError('Agente não encontrado.', 404);
 		res.status(200).json(updated);
@@ -72,6 +73,7 @@ const partialUpdate = (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const data = agenteSchema.partial().parse(req.body);
+		delete data.id;
 		const updatedAgente = agentesRepository.update(id, data);
 		if (!updatedAgente) throw new ApiError('Agente não encontrado.', 404);
 		res.status(200).json(updatedAgente);

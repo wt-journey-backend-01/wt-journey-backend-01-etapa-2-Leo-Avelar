@@ -13,7 +13,9 @@ const dateConverter = z.preprocess((arg) => {
     z.date({
         required_error: "Data de incorporação é obrigatória",
         invalid_type_error: "Data deve estar em 'YYYY-MM-DD' ou 'YYYY/MM/DD'"
-    }).transform(date => date.toISOString().slice(0, 10))
+    })
+    .max(new Date(), { message: "Data de incorporação não pode ser no futuro" })
+    .transform(date => date.toISOString().slice(0, 10))
 );
 
 const agenteSchema = z.object({
