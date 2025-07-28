@@ -1,4 +1,5 @@
-const repository = require("../repositories/casosRepository");
+const casosRepository = require("../repositories/casosRepository");
+const agentesRepository = require('../repositories/agentesRepository');
 const { casoSchema } = require("../utils/casoValidation");
 
 class ApiError extends Error {
@@ -11,7 +12,14 @@ class ApiError extends Error {
 
 const getAll = (req, res, next) => {
 	try {
-		const casos = repository.findAll();
+		let casos = casosRepository.findAll();
+
+		if (req.query.status) casos = casos.filter(caso => caso.status === req.query.status);
+		if (req.query.agente_id) casos = casos.filter(caso => caso.agente_id === req.query.agente_id);
+		if (req.query.q) {
+			const keyword = req.query.q.toLowerCase();
+			casos = casos.filter(c => c.titulo.toLowerCase().includes(keyword) || c.descricao.toLowerCase().includes(keyword));
+		}
 		res.status(200).json(casos);
 	} catch (error) {
 		next(new ApiError("Erro ao listar casos"));
@@ -21,7 +29,7 @@ const getAll = (req, res, next) => {
 const getById = (req, res, next) => {
 	try {
 		const { id } = req.params;
-		const caso = repository.findById(id);
+		const caso = casosRepository.findById(id);
 		if (!caso) return next(new ApiError('Caso não encontrado.', 404));
 		res.status(200).json(caso);
 	} catch (error) {
@@ -30,25 +38,32 @@ const getById = (req, res, next) => {
 }
 
 const create = (req, res, next) => {
-	try {
-		const data = casoSchema.parse(req.body);
-		const newCaso = repository.create(data);
-		res.status(201).json(newCaso);
-	} catch (error) {
-		next(new ApiError("Erro ao criar caso", 400));
-	}
+    try {
+        const data = casoSchema.parse(req.body);
+        if (!verifyAgente(data.agente_id)) {
+            throw new ApiError('Agente não encontrado.', 404);
+        }
+
+        const newCaso = casosRepository.create(data);
+        res.status(201).json(newCaso);
+    } catch (error) {
+        next(error);
+    }
 }
 
 const update = (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const data = casoSchema.parse(req.body);
-		const updated = repository.update(id, data);
-
-		if (!updated) return next(new ApiError('Caso não encontrado.', 404));
+		if (!verifyAgente(data.agente_id)) {
+			throw new ApiError('Agente não encontrado.', 404);
+		}
+		
+		const updated = casosRepository.update(id, data);
+		if (!updated) throw new ApiError('Caso não encontrado.', 404);
 		res.status(200).json(updated);
 	} catch (error) {
-		next(new ApiError(error.message, 400));
+		next(error);
 	}
 }
 
@@ -56,19 +71,22 @@ const partialUpdate = (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const data = casoSchema.partial().parse(req.body);
-		const updatedCaso = repository.update(id, data);
+		if (data.agente_id && !verifyAgente(data.agente_id)) {
+			throw new ApiError('Agente não encontrado.', 404);
+		}
 
-		if (!updatedCaso) return next(new ApiError('Caso não encontrado.', 404));
+		const updatedCaso = casosRepository.update(id, data);
+		if (!updatedCaso) throw new ApiError('Caso não encontrado.', 404);
 		res.status(200).json(updatedCaso);
 	} catch (error) {
-		next(new ApiError('Erro ao atualizar caso', 400));
+		next(error);
 	}
 }
 
 const remove = (req, res, next) => {
 	try {
 		const { id } = req.params;
-		const deleted = repository.delete(id);
+		const deleted = casosRepository.delete(id);
 
 		if (!deleted) return next(new ApiError('Caso não encontrado.', 404));
 		res.status(204).send();
@@ -77,9 +95,31 @@ const remove = (req, res, next) => {
 	}
 }
 
+const verifyAgente = (agenteId) => {
+    if (!agenteId) return true;
+    const agente = agentesRepository.findById(agenteId);
+    return !!agente;
+};
+
+const getAgenteOfCaso = (req, res, next) => {
+	try {
+		const { id } = req.params;
+		const caso = casosRepository.findById(id);
+		if (!caso) return next(new ApiError('Caso não encontrado.', 404));
+
+		const agente = agentesRepository.findById(caso.agente_id);
+		if (!agente) return next(new ApiError('Agente não encontrado.', 404));
+
+		res.status(200).json(agente);
+	} catch (error) {
+		next(new ApiError("Erro ao buscar agente do caso"));
+	}
+}
+
 module.exports = {
 	getAll,
 	getById,
+	getAgenteOfCaso,
 	create,
 	update,
 	partialUpdate,

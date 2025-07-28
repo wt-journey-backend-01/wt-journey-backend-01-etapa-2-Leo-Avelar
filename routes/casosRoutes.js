@@ -4,6 +4,7 @@ const controller = require('../controllers/casosController');
 
 router.get('/', controller.getAll);
 router.get('/:id', controller.getById);
+router.get('/:id/agente', controller.getAgenteOfCaso);
 router.post('/', controller.create);
 router.put('/:id', controller.update);
 router.patch('/:id', controller.partialUpdate);

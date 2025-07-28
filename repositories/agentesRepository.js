@@ -1,29 +1,8 @@
 const { v4: uuidv4 } = require('uuid');
 
-const agentes = [
-    {
-        id: "401bccf5-cf9e-489d-8412-446cd169a0f1",
-        nome: "Rommel Carneiro",
-        dataDeIncorporacao: "1992/10/04",
-        cargo: "delegado"
-    },
-    {
-        id: "401bccf5-cf9e-489d-8412-446cd169a0f2",
-        nome: "Ana Paula",
-        dataDeIncorporacao: "1995/05/15",
-        cargo: "investigadora"
-    },
-    {
-        id: "401bccf5-cf9e-489d-8412-446cd169a0f3",
-        nome: "Carlos Silva",
-        dataDeIncorporacao: "2000/08/20",
-        cargo: "agente"
-    }
-
-];
+const agentes = [];
 
 const findAll = () => agentes;
-
 const findById = (id) => agentes.find(a => a.id === id);
 
 const create = (agente) => {
