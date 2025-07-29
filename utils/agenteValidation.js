@@ -1,33 +1,21 @@
 const { z } = require('zod');
-const { parse, isValid } = require('date-fns');
-
-const dateConverter = z.preprocess((arg) => {
-    if (typeof arg !== 'string') return arg;
-
-    for (const format of ['yyyy-MM-dd', 'yyyy/MM/dd']) {
-        const parsed = parse(arg, format, new Date());
-        if (isValid(parsed)) return parsed;
-    }
-    return arg;
-},
-    z.date({
-        required_error: "Data de incorporação é obrigatória",
-        invalid_type_error: "Data deve estar em 'YYYY-MM-DD' ou 'YYYY/MM/DD'"
-    })
-    .max(new Date(), { message: "Data de incorporação não pode ser no futuro" })
-    .transform(date => date.toISOString().slice(0, 10))
-);
 
 const agenteSchema = z.object({
-    nome: z.any().refine((val) => {
-        return val !== undefined && val !== null && typeof val === 'string' && val.trim().length > 0;
-    }, {message: "Nome é obrigatório"}),
+    nome: z.string({ message: "nome é obrigatório (string)" }).min(1, { message: "nome não pode ser vazio" }),
 
-    dataDeIncorporacao: dateConverter,
-    
-    cargo: z.any().refine((val) => {
-        return val !== undefined && val !== null && typeof val === 'string' && val.trim().length > 0;
-    }, { message: "Cargo é obrigatório" }),
+    dataDeIncorporacao: z.string({ message: "dataDeIncorporacao é obrigatória (YYYY-MM-DD ou YYYY/MM/DD)" })
+        .min(1, { message: "dataDeIncorporacao não pode ser vazia" })
+        .transform((val) => val.replace(/\//g, '-'))
+        .refine(
+            (val) => /^\d{4}-\d{2}-\d{2}$/.test(val) && !isNaN(Date.parse(val)),
+            { message: "dataDeIncorporacao deve estar em 'YYYY-MM-DD' ou 'YYYY/MM/DD'" }
+        )
+        .refine(
+            (val) => new Date(val) <= new Date(),
+            { message: "A dataDeIncorporacao não pode ser no futuro." }
+        ),
+
+    cargo: z.string({ message: "cargo é obrigatório (string)" }).min(1, { message: "cargo não pode ser vazio" }),
 });
 
 module.exports = { agenteSchema };
