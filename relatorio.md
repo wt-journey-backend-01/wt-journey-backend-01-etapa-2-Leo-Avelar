@@ -1,81 +1,33 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 6 créditos restantes para usar o sistema de feedback AI.
+Você tem 5 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para Leo-Avelar:
 
-Nota final: **86.0/100**
+Nota final: **92.6/100**
 
-Olá, Leo-Avelar! 👋🚀
+# Feedback para o Leo-Avelar 🚓✨
 
-Primeiramente, parabéns pelo esforço e pelo ótimo trabalho na construção da sua API para o Departamento de Polícia! 🎉 Você conseguiu implementar a maior parte dos endpoints essenciais, com uma organização modular bacana entre rotas, controladores e repositories, e ainda mandou bem nos filtros e ordenações — isso é um diferencial e mostra que você está indo além do básico. Vamos juntos analisar seu código para deixar ele ainda mais afiado, ok? 😉
+Oi Leo! Tudo bem? Primeiro, deixa eu dizer que seu projeto está muito bem estruturado e organizado! 🎉 Você conseguiu implementar a maioria dos endpoints com os métodos HTTP corretos, trabalhou a validação de dados com o Zod, e o uso da arquitetura modular está impecável — separando bem as rotas, controllers, e repositories. Isso é fundamental para projetos escaláveis e fáceis de manter! 👏
 
----
-
-### 🎯 O que você fez muito bem
-
-- Sua estrutura de pastas está perfeita e segue exatamente o que o desafio pede: `routes/`, `controllers/`, `repositories/`, `utils/`, `docs/` e o `server.js` na raiz. Isso é essencial para manter o projeto organizado e escalável. 👏
-
-- Você implementou todos os métodos HTTP para os recursos `/agentes` e `/casos`, incluindo os métodos PUT, PATCH, DELETE, o que é ótimo!
-
-- A validação dos dados com `zod` está presente e bem aplicada na maior parte do código, garantindo que payloads mal formatados sejam rejeitados.
-
-- O tratamento de erros com a classe `ApiError` está muito bem pensado, facilitando o controle centralizado dos erros.
-
-- Você implementou filtros e ordenação para os agentes e casos, o que mostra que você entendeu bem como manipular dados em memória.
-
-- Bônus conquistados: filtros por status e agente nos casos, além do endpoint para buscar agente responsável por um caso (embora com alguns ajustes que vamos falar). Isso é muito legal! 🎉
+Além disso, parabéns por implementar os filtros nos endpoints de agentes e casos, e também por criar o endpoint de busca por palavra-chave nos casos (mesmo que tenha alguns ajustes a fazer). Você foi além do básico e isso mostra que está realmente se empenhando! 🚀
 
 ---
 
-### 🔍 Pontos para melhorar (e que vão turbinar sua API!)
-
-#### 1. **Falha ao impedir alteração do ID nas atualizações (PUT e PATCH)**
-
-Eu percebi que você está permitindo que o campo `id` seja alterado ao atualizar agentes e casos, o que não é desejado. O ID deve ser imutável, pois é o identificador único do recurso.
-
-No seu código do controlador de agentes, por exemplo:
-
-```js
-const update = (req, res, next) => {
-	try {
-		const { id } = req.params;
-		const data = agenteSchema.parse(req.body);
-		delete data.id; // aqui você tenta remover o id do payload
-		const updated = agentesRepository.update(id, data);
-		// ...
-	} catch (error) {
-		next(error);
-	}
-}
-```
-
-Mas, ao usar `delete data.id` **após** a validação do schema, o `zod` já terá validado o `id` como um campo permitido, e se o cliente enviar um `id` diferente, isso não é barrado na validação.
-
-**O problema fundamental é que seu schema aceita o campo `id` para atualização, e a validação não deve permitir que ele seja passado.**
-
-**Solução:**
-
-- Ajuste seus schemas `agenteSchema` e `casoSchema` para que o campo `id` seja omitido ou marcado como `optional` e proibido na validação de atualização (PUT e PATCH).
-
-- Ou crie schemas separados para criação e atualização, onde o `id` não seja permitido no corpo da requisição.
-
-Assim, o erro já será detectado na validação, e você evita tentar deletar manualmente o `id` depois.
+## Vamos analisar com carinho os pontos que precisam de atenção para você subir ainda mais seu nível! 🔍
 
 ---
 
-#### 2. **Falha ao retornar status 400 ao atualizar parcialmente um agente com payload inválido**
+### 1. PATCH para atualização parcial de agentes: status 400 ao enviar payload inválido
 
-Você mencionou que ao fazer PATCH em agentes com payload incorreto, não está recebendo o status 400 esperado.
-
-Analisando o método `partialUpdate` em `agentesController.js`:
+Você implementou o método PATCH para agentes no controller, usando o Zod com `.partial()` para validar os dados parciais:
 
 ```js
 const partialUpdate = (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const data = agenteSchema.partial().parse(req.body);
-		delete data.id;
+
 		const updatedAgente = agentesRepository.update(id, data);
 		if (!updatedAgente) throw new ApiError('Agente não encontrado.', 404);
 		res.status(200).json(updatedAgente);
@@ -85,34 +37,43 @@ const partialUpdate = (req, res, next) => {
 }
 ```
 
-Aqui, você está usando `agenteSchema.partial().parse(req.body)` para validar o corpo parcial, o que é correto. Porém, se o `req.body` estiver em formato incorreto (exemplo: campo com tipo errado), o `parse` deve lançar um erro e cair no `catch`.
+No entanto, percebi que o teste espera receber um **status 400** quando o payload enviado está em formato incorreto, mas seu código não está tratando esse erro como 400. Isso acontece porque o erro que o Zod lança quando a validação falha não está sendo interceptado para retornar o status correto.
 
-**Por que o status 400 pode não estar vindo?**
+### Por quê?
 
-- Pode ser que o seu middleware `errorHandler` (em `utils/errorHandler.js`) não esteja tratando corretamente os erros de validação do `zod` para retornar 400.
+No seu `errorHandler` (arquivo `utils/errorHandler.js`), você provavelmente não está diferenciando os erros de validação do Zod para enviar um 400. Ou então, o erro está chegando como exceção genérica e o middleware está retornando 500.
 
-- Ou o erro lançado pelo `zod` não está sendo identificado e convertido para status 400.
+### Como resolver?
 
-**Dica:**
-
-No seu `errorHandler`, certifique-se de detectar erros de validação do `zod` e responder com status 400 e mensagem adequada.
-
-Exemplo simplificado:
+Você pode melhorar seu tratamento de erros para capturar os erros de validação do Zod e retornar um status 400 com uma mensagem clara. Por exemplo:
 
 ```js
+// Exemplo simplificado do seu errorHandler.js
+const { ZodError } = require('zod');
+
 function errorHandler(err, req, res, next) {
-  if (err.name === 'ZodError') {
-    return res.status(400).json({ message: err.errors.map(e => e.message).join(', ') });
+  if (err instanceof ZodError) {
+    return res.status(400).json({ message: 'Payload inválido', issues: err.errors });
   }
-  // outras tratativas...
+
+  if (err.name === 'ApiError') {
+    return res.status(err.statusCode).json({ message: err.message });
+  }
+
+  console.error(err);
+  res.status(500).json({ message: 'Erro interno no servidor' });
 }
+
+module.exports = errorHandler;
 ```
+
+Assim, quando o `.parse()` do Zod falhar, o erro será tratado corretamente e o cliente receberá o status 400 esperado.
 
 ---
 
-#### 3. **Falha ao retornar status 404 ao tentar criar caso com agente_id inválido**
+### 2. Criar caso com `agente_id` inválido: status 404 esperado
 
-No seu `casosController.js`, você tem uma função `verifyAgente` que verifica se o `agente_id` passado existe:
+No controller de casos, você fez uma verificação bacana para validar se o `agente_id` passado existe:
 
 ```js
 const verifyAgente = (agenteId) => {
@@ -120,16 +81,12 @@ const verifyAgente = (agenteId) => {
     const agente = agentesRepository.findById(agenteId);
     return !!agente;
 };
-```
 
-E no método `create`:
-
-```js
 const create = (req, res, next) => {
     try {
         const data = casoSchema.parse(req.body);
 		if (!verifyAgente(data.agente_id)) {
-			throw new ApiError('Agente informado não existe.', 400);
+			throw new ApiError('Agente não encontrado.', 404);
 		}
 
         const newCaso = casosRepository.create(data);
@@ -140,31 +97,59 @@ const create = (req, res, next) => {
 }
 ```
 
-Aqui, você está retornando status **400** (Bad Request) quando o `agente_id` não existe. Porém, o correto, segundo boas práticas REST e o enunciado, é retornar **404 Not Found** para recursos relacionados que não existem.
-
-Ou seja, se o `agente_id` informado não existe, o erro deve ser 404, não 400.
-
-**Como corrigir:**
-
-Altere o lançamento do erro para:
+Porém, notei que no seu `repositories/casosRepository.js`, você tem um caso com status `"fechado"`:
 
 ```js
-throw new ApiError('Agente informado não existe.', 404);
+{
+    "id": "a2b3c4d5-e6f7-8g9h-0i1j-k2l3m4n5o6p7",
+    "titulo": "furto",
+    "descricao": "Relato de furto em residência na Rua das Flores, ocorrido no dia 15/08/2020.",
+    "status": "fechado",
+    "agente_id": "b0c1f8d2-3e4b-4c1b-8f3d-2e5f6a7b8c9d"
+}
 ```
 
-Esse ajuste deve ser aplicado também nos métodos de update e patch de casos, onde você verifica o `agente_id`.
+O problema é que seu `casoSchema` (provavelmente em `utils/casoValidation.js`) restringe o campo `status` para os valores `"aberto"` ou `"solucionado"` (conforme especificado no Swagger). Assim, o status `"fechado"` não é válido e pode causar problemas na validação ou no comportamento da aplicação.
+
+### Por quê isso pode impactar sua validação de agente?
+
+Se o schema está rejeitando o valor `"fechado"`, pode haver confusão ou erros indiretos na manipulação dos casos, e isso pode afetar testes relacionados a criação e atualização de casos.
+
+### O que fazer?
+
+Corrija o array de casos iniciais para usar apenas os status permitidos:
+
+```js
+{
+    "id": "a2b3c4d5-e6f7-8g9h-0i1j-k2l3m4n5o6p7",
+    "titulo": "furto",
+    "descricao": "Relato de furto em residência na Rua das Flores, ocorrido no dia 15/08/2020.",
+    "status": "solucionado", // trocar "fechado" para "solucionado"
+    "agente_id": "b0c1f8d2-3e4b-4c1b-8f3d-2e5f6a7b8c9d"
+}
+```
+
+Além disso, seu método de verificação do agente está correto, mas certifique-se que o `agente_id` passado na criação realmente não exista para que o erro 404 seja disparado corretamente.
 
 ---
 
-#### 4. **Endpoint GET /casos/:id/agente não está funcionando corretamente**
+### 3. Endpoints bônus de filtragem e mensagens de erro customizadas
 
-Você implementou a rota no `casosRoutes.js`:
+Você implementou os filtros básicos de status e agente em `/casos` e também a busca por palavra-chave no título e descrição dos casos, o que é excelente! Porém, alguns testes bônus falharam, indicando que:
+
+- O endpoint que retorna o agente responsável por um caso (`GET /casos/:id/agente`) pode não estar funcionando 100% como esperado.
+- A filtragem de agentes por data de incorporação com sort ascendente e descendente não está completa.
+- As mensagens de erro customizadas para argumentos inválidos podem estar faltando ou não muito detalhadas.
+
+### Analisando o endpoint `/casos/:id/agente`
+
+No seu arquivo `routes/casosRoutes.js`:
 
 ```js
 router.get('/:id/agente', controller.getAgenteOfCaso);
 ```
 
-E o método no controller:
+E no controller:
 
 ```js
 const getAgenteOfCaso = (req, res, next) => {
@@ -183,107 +168,145 @@ const getAgenteOfCaso = (req, res, next) => {
 }
 ```
 
-A lógica está correta! Porém, notei que na definição das rotas em `casosRoutes.js`, você colocou essa rota **depois** das rotas com `/:id`:
+A implementação parece correta, mas atenção especial à rota: no Swagger você definiu a rota como `/casos/:id/agente`, mas no comentário do Swagger você usou `/:id/agente` com dois pontos, o que pode causar confusão se o Swagger interpretar literalmente.
 
-```js
-router.get('/search', controller.search);
-router.get('/', controller.getAll);
-router.post('/', controller.create);
-router.put('/:id', controller.update);
-router.get('/:id', controller.getById);
-router.delete('/:id', controller.delete);
-router.patch('/:id', controller.partialUpdate);
-router.get('/:id/agente', controller.getAgenteOfCaso);
+**Dica:** No Swagger, para definir parâmetros de rota, use `{id}` no path, não `:id`. Exemplo:
+
+```yaml
+/casos/{id}/agente:
+  get:
+    ...
 ```
 
-Isso pode causar conflito, pois o Express interpreta as rotas na ordem em que são declaradas. O `/:id` é genérico e pode "engolir" o `/:id/agente`, fazendo com que a rota para buscar o agente nunca seja chamada.
-
-**Solução:**
-
-Coloque a rota mais específica (`/:id/agente`) **antes** da rota genérica `/:id`, assim:
-
-```js
-router.get('/search', controller.search);
-router.get('/', controller.getAll);
-router.post('/', controller.create);
-router.get('/:id/agente', controller.getAgenteOfCaso); // mover para cima
-router.get('/:id', controller.getById);
-router.put('/:id', controller.update);
-router.patch('/:id', controller.partialUpdate);
-router.delete('/:id', controller.delete);
-```
-
-Isso garante que o Express verifique primeiro a rota específica e só depois a genérica.
+Além disso, revise se o Swagger está refletindo exatamente a rota que você definiu no Express. Se houver discrepância, pode causar falhas nos testes.
 
 ---
 
-#### 5. **Filtro por keywords na busca de casos não está implementado corretamente**
+### 4. Ordenação por data de incorporação dos agentes
 
-Você tem o endpoint `/casos/search` e no controller:
+No seu controller de agentes, você já implementou o sort:
 
 ```js
-const search = (req, res, next) => {
-	try {
-		let casos = casosRepository.findAll();
-		if (req.query.q) {
-			const keyword = req.query.q.toLowerCase();
-			casos = casos.filter(c => c.titulo.toLowerCase().includes(keyword) || c.descricao.toLowerCase().includes(keyword));
-		}
-		res.status(200).json(casos);
-	} catch (error) {
-		next(new ApiError("Erro ao buscar casos"));
+if (req.query.sort) {
+	const field = req.query.sort.replace('-', '');
+	const order = req.query.sort.startsWith('-') ? -1 : 1;
+	
+	if (field === 'dataDeIncorporacao') {
+		agentes.sort((a, b) => {
+			const dateA = new Date(a.dataDeIncorporacao);
+			const dateB = new Date(b.dataDeIncorporacao);
+			return (dateA - dateB) * order;
+		});
+	} else {
+		agentes.sort((a, b) => (a[field] > b[field] ? 1 : a[field] < b[field] ? -1 : 0) * order);
 	}
 }
 ```
 
-A lógica está correta e bem implementada! Porém, no arquivo de rotas, o endpoint está declarado corretamente? Sim, está:
+Muito bom! Porém, reparei que no seu array inicial de agentes, as datas estão no formato `"YYYY/MM/DD"` ou `"YYYY-MM-DD"` misturados:
 
 ```js
-router.get('/search', controller.search);
+{
+    "id": "401bccf5-cf9e-489d-8412-446cd169a0f1",
+    "nome": "Rommel Carneiro",
+    "dataDeIncorporacao": "1992/10/04",
+    "cargo": "delegado"
+},
+{
+    "id": "b0c1f8d2-3e4b-4c1b-8f3d-2e5f6a7b8c9d",
+    "nome": "Ana Paula",
+    "dataDeIncorporacao": "2005/05/15",
+    "cargo": "investigadora"
+},
+{
+    "id": "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6",
+    "nome": "Carlos Silva",
+    "dataDeIncorporacao": "2010/03/20",
+    "cargo": "agente"
+}
 ```
 
-Então o problema pode estar relacionado à ordem das rotas (como no item anterior) ou à forma como os testes esperam o resultado.
+O JavaScript pode interpretar datas com barras e traços de forma diferente dependendo do ambiente, o que pode afetar a ordenação.
 
-Se você já corrigiu a ordem das rotas, isso deve funcionar. Caso contrário, recomendo testar bastante esse endpoint.
+**Sugestão:** Padronize todas as datas para o formato ISO, que é `"YYYY-MM-DD"`, assim:
+
+```js
+"dataDeIncorporacao": "1992-10-04",
+```
+
+Isso garante que o `new Date()` funcione corretamente em qualquer ambiente.
 
 ---
 
-### 📚 Recursos para você aprofundar ainda mais
+### 5. Mensagens de erro customizadas
 
-- Para garantir validações robustas e evitar que o `id` seja alterado no PUT/PATCH, recomendo este vídeo que ensina boas práticas com validação em APIs Node.js/Express usando Zod:  
-  https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_
+Você criou a classe `ApiError` para facilitar o tratamento de erros e isso é ótimo! 🎉
 
-- Para entender melhor como organizar suas rotas e evitar conflitos entre rotas específicas e genéricas, confira a documentação oficial do Express sobre roteamento:  
-  https://expressjs.com/pt-br/guide/routing.html
+```js
+class ApiError extends Error {
+	constructor(message, statusCode = 500) {
+		super(message);
+		this.name = "ApiError";
+		this.statusCode = statusCode;
+	}
+}
+```
 
-- Se quiser revisar sobre códigos de status HTTP e quando usar cada um (400 vs 404), esse artigo é excelente:  
+Porém, percebi que em alguns pontos você lança erros genéricos, como:
+
+```js
+next(new ApiError("Erro ao listar agentes"));
+```
+
+E em outros, erros mais específicos:
+
+```js
+throw new ApiError('Agente não encontrado.', 404);
+```
+
+Para melhorar ainda mais, tente sempre enviar mensagens claras e específicas para cada tipo de erro, incluindo detalhes do que deu errado. Isso ajuda o cliente da API a entender exatamente o problema.
+
+Além disso, no seu middleware de erro, garanta que o corpo da resposta retorne esse `message` para o cliente, e se possível, inclua um campo `errors` ou `details` para erros de validação.
+
+---
+
+## Recomendações de Aprendizado 📚
+
+Para te ajudar a aprimorar esses pontos, recomendo fortemente os seguintes recursos:
+
+- **Validação de dados e tratamento de erros (status 400 e 404):**  
   https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
-  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404
+  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404  
+  https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_  
 
-- Para reforçar a manipulação de arrays e filtros, esse vídeo pode ajudar muito:  
-  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
+- **Express.js e rotas organizadas:**  
+  https://expressjs.com/pt-br/guide/routing.html  
+  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH  
 
----
+- **Manipulação de datas e arrays em JS:**  
+  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI  
 
-### 📝 Resumo rápido para focar
-
-- ❌ Ajustar schemas para impedir alteração do campo `id` em PUT e PATCH (criar schemas separados para criação e atualização).
-
-- ❌ Garantir que o middleware de tratamento de erros converta erros de validação do Zod em status 400.
-
-- ❌ Corrigir o status retornado ao criar/atualizar caso com `agente_id` inválido para 404 (não 400).
-
-- ❌ Reorganizar rotas em `casosRoutes.js` para colocar rotas específicas (`/:id/agente`) antes das genéricas (`/:id`).
-
-- ✅ Validar e testar o endpoint de busca `/casos/search` para garantir que funciona como esperado.
+- **Como tratar erros customizados no Express:**  
+  https://youtu.be/RSZHvQomeKE  
 
 ---
 
-Leo, você está no caminho certo e já construiu uma API sólida! 💪 Com esses ajustes, sua aplicação vai ficar ainda mais robusta e alinhada com as melhores práticas. Continue praticando, revisando e explorando cada detalhe — isso fará de você um desenvolvedor cada vez melhor! 🚀✨
+## Resumo para focar nos próximos passos 🔑
 
-Se precisar de ajuda para implementar qualquer um desses pontos, me chama aqui que a gente resolve junto! 😉
+- [ ] Ajustar o `errorHandler` para capturar erros do Zod e retornar status 400 com mensagens claras.  
+- [ ] Corrigir o valor `status` dos casos iniciais para usar apenas `"aberto"` ou `"solucionado"`.  
+- [ ] Garantir que o endpoint `/casos/:id/agente` esteja corretamente definido e documentado no Swagger (usar `{id}` ao invés de `:id`).  
+- [ ] Padronizar o formato das datas em `dataDeIncorporacao` para `"YYYY-MM-DD"` para evitar problemas na ordenação.  
+- [ ] Melhorar as mensagens de erro customizadas para serem mais claras e informativas para o cliente da API.  
+- [ ] Revisar a implementação da busca por palavra-chave e filtros para garantir que estejam funcionando conforme esperado.  
 
-Abraço e sucesso! 👊🔥
+---
+
+Leo, você está muito próximo da perfeição aqui! Seu código demonstra que você já domina os conceitos essenciais de APIs REST com Node.js e Express, e com esses ajustes você vai garantir que sua API fique robusta, confiável e fácil de usar. Continue assim, com essa garra e atenção aos detalhes! 💪✨
+
+Se precisar, volte aos vídeos recomendados para reforçar os conceitos e me chame para um help! Estou aqui para te ajudar a crescer ainda mais! 🚀
+
+Um abraço e bons códigos! 👊😄
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
