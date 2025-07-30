@@ -1,6 +1,8 @@
 const { z } = require('zod');
 
 const agenteSchema = z.object({
+    id: z.any().refine(() => false, { message: "Id inválido, o id é criado automaticamente e não é alterável" }).optional(),
+
     nome: z.string({ message: "nome é obrigatório (string)" }).min(1, { message: "nome não pode ser vazio" }),
 
     dataDeIncorporacao: z.string({ message: "dataDeIncorporacao é obrigatória (YYYY-MM-DD ou YYYY/MM/DD)" })

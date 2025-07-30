@@ -35,7 +35,7 @@ const getAll = (req, res, next) => {
 
 		if (req.query.status) casos = casos.filter(caso => caso.status === req.query.status);
 		if (req.query.agente_id) casos = casos.filter(caso => caso.agente_id === req.query.agente_id);
-
+		
 		res.status(200).json(casos);
 	} catch (error) {
 		next(new ApiError("Erro ao listar casos"));
@@ -57,7 +57,7 @@ const create = (req, res, next) => {
     try {
         const data = casoSchema.parse(req.body);
 		if (!verifyAgente(data.agente_id)) {
-			throw new ApiError('Agente informado não existe.', 400);
+			throw new ApiError('Agente não encontrado.', 404);
 		}
 
         const newCaso = casosRepository.create(data);
@@ -71,11 +71,9 @@ const update = (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const data = casoSchema.parse(req.body);
-		delete data.id;
 		if (!verifyAgente(data.agente_id)) {
-			throw new ApiError('Agente informado não existe.', 400);
+			throw new ApiError('Agente não encontrado.', 404);
 		}
-		
 		const updated = casosRepository.update(id, data);
 		if (!updated) throw new ApiError('Caso não encontrado.', 404);
 		res.status(200).json(updated);
@@ -88,11 +86,9 @@ const partialUpdate = (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const data = casoSchema.partial().parse(req.body);
-		delete data.id;
 		if (data.agente_id && !verifyAgente(data.agente_id)) {
-			throw new ApiError('Agente informado não existe.', 400);
+			throw new ApiError('Agente não encontrado.', 404);
 		}
-
 		const updatedCaso = casosRepository.update(id, data);
 		if (!updatedCaso) throw new ApiError('Caso não encontrado.', 404);
 		res.status(200).json(updatedCaso);
@@ -105,7 +101,7 @@ const remove = (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const deleted = casosRepository.delete(id);
-
+		
 		if (!deleted) return next(new ApiError('Caso não encontrado.', 404));
 		res.status(204).send();
 	} catch (error) {

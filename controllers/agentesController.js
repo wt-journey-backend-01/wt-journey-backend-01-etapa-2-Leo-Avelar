@@ -12,7 +12,6 @@ class ApiError extends Error {
 const getAll = (req, res, next) => {
 	try {
 		let agentes = agentesRepository.findAll();
-
 		if (req.query.cargo) agentes = agentes.filter(a => a.cargo === req.query.cargo);
 		if (req.query.sort) {
 			const field = req.query.sort.replace('-', '');
@@ -28,7 +27,6 @@ const getAll = (req, res, next) => {
 				agentes.sort((a, b) => (a[field] > b[field] ? 1 : a[field] < b[field] ? -1 : 0) * order);
 			}
 		}
-		
 		res.status(200).json(agentes);
 	} catch (error) {
 		next(new ApiError("Erro ao listar agentes"));
@@ -60,7 +58,7 @@ const update = (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const data = agenteSchema.parse(req.body);
-		delete data.id;
+
 		const updated = agentesRepository.update(id, data);
 		if (!updated) throw new ApiError('Agente não encontrado.', 404);
 		res.status(200).json(updated);
@@ -73,7 +71,7 @@ const partialUpdate = (req, res, next) => {
 	try {
 		const { id } = req.params;
 		const data = agenteSchema.partial().parse(req.body);
-		delete data.id;
+
 		const updatedAgente = agentesRepository.update(id, data);
 		if (!updatedAgente) throw new ApiError('Agente não encontrado.', 404);
 		res.status(200).json(updatedAgente);
