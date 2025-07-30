@@ -1,47 +1,29 @@
 const agentesRepository = require("../repositories/agentesRepository");
 const { agenteSchema } = require('../utils/agenteValidation');
 
-class ApiError extends Error {
-	constructor(message, statusCode = 500) {
-		super(message);
-		this.name = "ApiError";
-		this.statusCode = statusCode;
+const getAll = (req, res) => {
+	const {cargo, sort} = req.query;
+	let agentes = agentesRepository.findAll();
+
+	if (cargo) {
+		agentes = agentes.filter(a => a.cargo === cargo);
 	}
+	if (sort === "dataDeIncorporacao" || sort === "-dataDeIncorporacao") {
+		const order = sort.startsWith('-') ? -1 : 1;
+		agentes.sort((a, b) => {
+			const dateA = new Date(a.dataDeIncorporacao);
+			const dateB = new Date(b.dataDeIncorporacao);
+			return (dateA - dateB) * order;
+		});
+	}
+	res.status(200).json(agentes);
 }
 
-const getAll = (req, res, next) => {
-	try {
-		let agentes = agentesRepository.findAll();
-		if (req.query.cargo) agentes = agentes.filter(a => a.cargo === req.query.cargo);
-		if (req.query.sort) {
-			const field = req.query.sort.replace('-', '');
-			const order = req.query.sort.startsWith('-') ? -1 : 1;
-			
-			if (field === 'dataDeIncorporacao') {
-				agentes.sort((a, b) => {
-					const dateA = new Date(a.dataDeIncorporacao);
-					const dateB = new Date(b.dataDeIncorporacao);
-					return (dateA - dateB) * order;
-				});
-			} else {
-				agentes.sort((a, b) => (a[field] > b[field] ? 1 : a[field] < b[field] ? -1 : 0) * order);
-			}
-		}
-		res.status(200).json(agentes);
-	} catch (error) {
-		next(new ApiError(`Erro ao obter agentes`, 500));
-	}	
-}
-
-const getById = (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const agente = agentesRepository.findById(id);
-        if (!agente) return next(new ApiError('Agente não encontrado.', 404));
-        res.status(200).json(agente);
-    } catch (error) {
-		next(new ApiError(`Erro ao obter agente`, 500));
-    }	
+const getById = (req, res) => {
+	const { id } = req.params;
+	const agente = agentesRepository.findById(id);
+	if (!agente) return res.status(404).json({ message: 'Agente não encontrado.' });
+	res.status(200).json(agente);
 }
 
 const create = (req, res, next) => {
@@ -60,7 +42,7 @@ const update = (req, res, next) => {
 		const data = agenteSchema.parse(req.body);
 
 		const updated = agentesRepository.update(id, data);
-		if (!updated) throw new ApiError('Agente não encontrado.', 404);
+		if (!updated) return res.status(404).json({ message: 'Agente não encontrado.' });
 		res.status(200).json(updated);
 	} catch (error) {
 		next(error);
@@ -73,23 +55,19 @@ const partialUpdate = (req, res, next) => {
 		const data = agenteSchema.partial().parse(req.body);
 
 		const updatedAgente = agentesRepository.update(id, data);
-		if (!updatedAgente) throw new ApiError('Agente não encontrado.', 404);
+		if (!updatedAgente) return res.status(404).json({ message: 'Agente não encontrado.' });
 		res.status(200).json(updatedAgente);
 	} catch (error) {
 		next(error);
 	}
 }
 
-const remove = (req, res, next) => {
-	try {
-		const { id } = req.params;
-		const deleted = agentesRepository.delete(id);
+const remove = (req, res) => {
+	const { id } = req.params;
+	const deleted = agentesRepository.delete(id);
 
-		if (!deleted) return next(new ApiError('Agente não encontrado.', 404));
-		res.status(204).send();
-	} catch (error) {
-		next(new ApiError(`Erro ao deletar agente`, 500));
-	}
+	if (!deleted) return res.status(404).json({ message: 'Agente não encontrado.' });
+	res.status(204).send();
 }
 
 module.exports = {

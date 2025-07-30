@@ -2,19 +2,19 @@ const { v4: uuidv4 } = require('uuid');
 
 const agentes = [
     {
-        "id": "401bccf5-cf9e-489d-8412-446cd169a0f1",
+        "id": "47eb8b92-9b09-45d0-ae4b-537b7823e4e8",
         "nome": "Rommel Carneiro",
         "dataDeIncorporacao": "1992-10-04",
         "cargo": "delegado"
     },
     {
-        "id": "b0c1f8d2-3e4b-4c1b-8f3d-2e5f6a7b8c9d",
+        "id": "0690c192-1be5-4897-81d8-6a56cf402feb",
         "nome": "Ana Paula",
         "dataDeIncorporacao": "2005-05-15",
         "cargo": "investigadora"
     },
     {
-        "id": "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6",
+        "id": "199818bb-859a-4284-99ae-8b3497f54f8d",
         "nome": "Carlos Silva",
         "dataDeIncorporacao": "2010-03-20",
         "cargo": "agente"

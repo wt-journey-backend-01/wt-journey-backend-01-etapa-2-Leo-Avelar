@@ -18,6 +18,10 @@ app.use('/casos', casosRouter);
 setupSwagger(app);
 app.use(errorHandler);
 
+app.use((req, res) => {
+    res.status(404).json({ message: 'Rota não encontrada. Verifique as rotas disponiveis em /docs' });
+});
+
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta: ${PORT}`);
 });

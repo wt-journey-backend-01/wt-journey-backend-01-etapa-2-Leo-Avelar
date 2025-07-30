@@ -13,21 +13,13 @@ const errorHandler = (err, req, res, next) => {
         
         return res.status(400).json({
             status: 400,
-            message: 'Payload inválido',
+            message: 'Parâmetros inválidos',
             errors
-        });
-    }
-
-    if (err.name === 'ApiError') {
-        return res.status(err.statusCode).json({
-            status: err.statusCode,
-            message: err.message
         });
     }
 
     const statusCode = err.statusCode || 500;
     const message = err.message || 'Erro interno no servidor';
-
     res.status(statusCode).json({
         status: statusCode,
         message,
