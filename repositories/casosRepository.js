@@ -12,7 +12,7 @@ const casos = [
         "id": "a2b3c4d5-e6f7-8g9h-0i1j-k2l3m4n5o6p7",
         "titulo": "furto",
         "descricao": "Relato de furto em residência na Rua das Flores, ocorrido no dia 15/08/2020.",
-        "status": "fechado",
+        "status": "solucionado",
         "agente_id": "b0c1f8d2-3e4b-4c1b-8f3d-2e5f6a7b8c9d"
     }
 ];

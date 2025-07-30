@@ -25,7 +25,7 @@ const search = (req, res, next) => {
 		}
 		res.status(200).json(casos);
 	} catch (error) {
-		next(new ApiError("Erro ao buscar casos"));
+		next(new ApiError(`Erro ao buscar casos`, 500));
 	}
 }
 
@@ -38,8 +38,8 @@ const getAll = (req, res, next) => {
 		
 		res.status(200).json(casos);
 	} catch (error) {
-		next(new ApiError("Erro ao listar casos"));
-	}	
+		next(new ApiError(`Erro ao obter casos`, 500));
+	}
 }
 
 const getById = (req, res, next) => {
@@ -49,8 +49,8 @@ const getById = (req, res, next) => {
 		if (!caso) return next(new ApiError('Caso não encontrado.', 404));
 		res.status(200).json(caso);
 	} catch (error) {
-		next(new ApiError("Erro ao listar casos"));
-	}	
+		next(new ApiError(`Erro ao obter caso`, 500));
+	}
 }
 
 const create = (req, res, next) => {
@@ -105,7 +105,7 @@ const remove = (req, res, next) => {
 		if (!deleted) return next(new ApiError('Caso não encontrado.', 404));
 		res.status(204).send();
 	} catch (error) {
-		next(new ApiError('Erro ao deletar caso'));
+		next(new ApiError(`Erro ao deletar caso`, 500));
 	}
 }
 
@@ -120,7 +120,7 @@ const getAgenteOfCaso = (req, res, next) => {
 
 		res.status(200).json(agente);
 	} catch (error) {
-		next(new ApiError("Erro ao buscar agente do caso"));
+		next(new ApiError(`Erro ao buscar agente do caso`, 500));
 	}
 }
 

@@ -76,7 +76,7 @@ router.get('/search', controller.search);
 
 /**
  * @swagger
- * /casos/:id/agente:
+ * /casos/{id}/agente:
  *  get:
  *    summary: Retorna o agente responsável por um caso específico
  *    tags: [Casos]

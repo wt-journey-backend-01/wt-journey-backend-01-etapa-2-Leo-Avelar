@@ -29,7 +29,7 @@ const getAll = (req, res, next) => {
 		}
 		res.status(200).json(agentes);
 	} catch (error) {
-		next(new ApiError("Erro ao listar agentes"));
+		next(new ApiError(`Erro ao obter agentes`, 500));
 	}	
 }
 
@@ -40,7 +40,7 @@ const getById = (req, res, next) => {
         if (!agente) return next(new ApiError('Agente não encontrado.', 404));
         res.status(200).json(agente);
     } catch (error) {
-        next(new ApiError("Erro ao listar agentes"));
+		next(new ApiError(`Erro ao obter agente`, 500));
     }	
 }
 
@@ -88,7 +88,7 @@ const remove = (req, res, next) => {
 		if (!deleted) return next(new ApiError('Agente não encontrado.', 404));
 		res.status(204).send();
 	} catch (error) {
-		next(new ApiError('Erro ao deletar agente'));
+		next(new ApiError(`Erro ao deletar agente`, 500));
 	}
 }
 

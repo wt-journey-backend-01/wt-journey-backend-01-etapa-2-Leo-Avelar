@@ -1,17 +1,19 @@
+const { ZodError } = require('zod');
+
 const errorHandler = (err, req, res, next) => {
-    if (err.name === 'ZodError') {
+    if (err instanceof ZodError || err.name === 'ZodError' || err.constructor.name === 'ZodError') {
         const errors = {};
         
         if (err.issues && Array.isArray(err.issues)) {
             err.issues.forEach(issue => {
-                const field = issue.path.join('.');
+                const field = issue.path.length > 0 ? issue.path.join('.') : 'root';
                 errors[field] = issue.message;
             });
         }
         
         return res.status(400).json({
             status: 400,
-            message: 'Parâmetros inválidos',
+            message: 'Payload inválido',
             errors
         });
     }
